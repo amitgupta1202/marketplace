@@ -1,7 +1,9 @@
 package com.silverbars.marketplace
 
 /*
-    Design principles, since its been asked to be designed as shipped as library for client, then assumptions made are client is trusted and library needs to be java friendly
+    Design principles, since its been asked to be designed as shipped as library for client,
+    then assumptions made are client is trusted and library needs to be java friendly
+    and need to support multiple thread invoking at same time.
  */
 interface OrderService {
 
@@ -19,9 +21,22 @@ interface OrderService {
      */
     fun cancelOrder(orderId: OrderId)
 
+    /**
+     * return live order board
+     */
+    fun liveOrderBoard(): LiveOrderBoard
+
+    companion object {
+        private val orderStorage: OrderStorage = InMemoryOrderStorage()
+        private val liveOrderBoardProjectionProcessor = LiveOrderBoardStorage(orderStorage)
+        val INSTANCE: OrderService = DefaultOrderService(orderStorage, liveOrderBoardProjectionProcessor)
+    }
 }
 
-internal class DefaultOrderService(private val orderStorage: OrderStorage) :
+internal class DefaultOrderService(
+    private val orderStorage: OrderStorage,
+    private val liveOrderBoardStorage: LiveOrderBoardStorage
+) :
     OrderService {
 
     override fun registerOrder(
@@ -49,8 +64,23 @@ internal class DefaultOrderService(private val orderStorage: OrderStorage) :
     override tailrec fun cancelOrder(orderId: OrderId) {
         val order = orderStorage.get(orderId)
         if (order != null && order.orderState == OrderState.Active) {
-            if (!orderStorage.save(order.copy(orderState = OrderState.Cancelled, version = order.version.next()), order.version)) cancelOrder(orderId)
+            if (!orderStorage.save(
+                    order.copy(orderState = OrderState.Cancelled, version = order.version.next()),
+                    order.version
+                )
+            ) cancelOrder(orderId)
         } else throw InvalidStateException()
     }
+
+    override fun liveOrderBoard(): LiveOrderBoard =
+        liveOrderBoardStorage.liveOrderBoard().entries
+            .sortedBy { (price, qty) -> if (qty < 0) price else -price }
+            .mapNotNull { (pricePerKey, qty) ->
+                when {
+                    qty < 0 -> LiveOrderBoardItem(OrderType.Sell, -qty, pricePerKey)
+                    qty > 0 -> LiveOrderBoardItem(OrderType.Buy, qty, pricePerKey)
+                    else -> null
+                }
+            }
 }
 

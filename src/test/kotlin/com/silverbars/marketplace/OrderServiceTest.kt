@@ -7,14 +7,11 @@ import com.silverbars.marketplace.OrderType.Sell
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-internal class LiveOrderBoardServiceTest {
+internal class OrderServiceTest {
 
-    private val orderStorage: OrderStorage =
-        InMemoryOrderStorage()
-    private val orderService: OrderService =
-        DefaultOrderService(orderStorage)
-    private val liveOrderBoardService =
-        InMemoryLiveOrderBoardService(orderStorage)
+    private val orderStorage: OrderStorage = InMemoryOrderStorage()
+    private val liveOrderBoardProjectionProcessor = LiveOrderBoardStorage(orderStorage)
+    private val orderService: OrderService = DefaultOrderService(orderStorage, liveOrderBoardProjectionProcessor)
 
     @Test
     internal fun `register a sell order`() {
@@ -22,7 +19,8 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKg = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKg, Sell)
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Sell,
@@ -31,9 +29,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -43,13 +39,13 @@ internal class LiveOrderBoardServiceTest {
         val quantity = 3.5
         val pricePerKg = 306.0
         val orderId = OrderId.generate()
-        orderService.registerOrder(orderId,
-            UserId("user 1"), quantity, pricePerKg, Sell)
+        orderService.registerOrder(
+            orderId,
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         orderService.cancelOrder(orderId)
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEmpty()
     }
@@ -60,10 +56,12 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKg = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKg, Sell)
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity, pricePerKg, Sell)
+            UserId("user 2"), quantity, pricePerKg, Sell
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Sell,
@@ -72,9 +70,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -84,11 +80,15 @@ internal class LiveOrderBoardServiceTest {
         val quantity = 3.5
         val pricePerKg = 306.0
         val orderIdA = OrderId.generate()
-        orderService.registerOrder(orderIdA,
-            UserId("user 1"), quantity, pricePerKg, Sell)
+        orderService.registerOrder(
+            orderIdA,
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         val orderIdB = OrderId.generate()
-        orderService.registerOrder(orderIdB,
-            UserId("user 2"), quantity, pricePerKg, Sell)
+        orderService.registerOrder(
+            orderIdB,
+            UserId("user 2"), quantity, pricePerKg, Sell
+        )
         orderService.cancelOrder(orderIdA)
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
@@ -98,9 +98,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -112,10 +110,12 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKgLower = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKgHigher, Sell)
+            UserId("user 1"), quantity, pricePerKgHigher, Sell
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity , pricePerKgLower, Sell)
+            UserId("user 2"), quantity, pricePerKgLower, Sell
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Sell,
@@ -124,9 +124,7 @@ internal class LiveOrderBoardServiceTest {
             ), LiveOrderBoardItem(Sell, quantity, pricePerKgHigher)
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -137,7 +135,8 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKg = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKg, Buy)
+            UserId("user 1"), quantity, pricePerKg, Buy
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Buy,
@@ -146,9 +145,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -158,13 +155,13 @@ internal class LiveOrderBoardServiceTest {
         val quantity = 3.5
         val pricePerKg = 306.0
         val orderId = OrderId.generate()
-        orderService.registerOrder(orderId,
-            UserId("user 1"), quantity, pricePerKg, Buy)
+        orderService.registerOrder(
+            orderId,
+            UserId("user 1"), quantity, pricePerKg, Buy
+        )
         orderService.cancelOrder(orderId)
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEmpty()
     }
@@ -175,10 +172,12 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKg = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKg, Buy)
+            UserId("user 1"), quantity, pricePerKg, Buy
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity, pricePerKg, Buy)
+            UserId("user 2"), quantity, pricePerKg, Buy
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Buy,
@@ -187,9 +186,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -199,11 +196,15 @@ internal class LiveOrderBoardServiceTest {
         val quantity = 3.5
         val pricePerKg = 306.0
         val orderIdA = OrderId.generate()
-        orderService.registerOrder(orderIdA,
-            UserId("user 1"), quantity, pricePerKg, Buy)
+        orderService.registerOrder(
+            orderIdA,
+            UserId("user 1"), quantity, pricePerKg, Buy
+        )
         val orderIdB = OrderId.generate()
-        orderService.registerOrder(orderIdB,
-            UserId("user 2"), quantity, pricePerKg, Buy)
+        orderService.registerOrder(
+            orderIdB,
+            UserId("user 2"), quantity, pricePerKg, Buy
+        )
         orderService.cancelOrder(orderIdB)
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
@@ -213,9 +214,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -227,10 +226,12 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKgHigher = 307.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKgLower, Buy)
+            UserId("user 1"), quantity, pricePerKgLower, Buy
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity, pricePerKgHigher, Buy)
+            UserId("user 2"), quantity, pricePerKgHigher, Buy
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Buy,
@@ -239,9 +240,9 @@ internal class LiveOrderBoardServiceTest {
             ), LiveOrderBoardItem(Buy, quantity, pricePerKgLower)
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
 
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -252,14 +253,14 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKg = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKg, Sell)
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity, pricePerKg, Buy)
+            UserId("user 2"), quantity, pricePerKg, Buy
+        )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEmpty()
     }
@@ -269,11 +270,15 @@ internal class LiveOrderBoardServiceTest {
         val quantity = 3.5
         val pricePerKg = 306.0
         val orderIdA = OrderId.generate()
-        orderService.registerOrder(orderIdA,
-            UserId("user 1"), quantity, pricePerKg, Sell)
+        orderService.registerOrder(
+            orderIdA,
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         val orderIdB = OrderId.generate()
-        orderService.registerOrder(orderIdB,
-            UserId("user 2"), quantity, pricePerKg, Buy)
+        orderService.registerOrder(
+            orderIdB,
+            UserId("user 2"), quantity, pricePerKg, Buy
+        )
         orderService.cancelOrder(orderIdB)
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
@@ -283,9 +288,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -295,11 +298,15 @@ internal class LiveOrderBoardServiceTest {
         val quantity = 3.5
         val pricePerKg = 306.0
         val orderIdA = OrderId.generate()
-        orderService.registerOrder(orderIdA,
-            UserId("user 1"), quantity, pricePerKg, Sell)
+        orderService.registerOrder(
+            orderIdA,
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         val orderIdB = OrderId.generate()
-        orderService.registerOrder(orderIdB,
-            UserId("user 2"), quantity, pricePerKg, Buy)
+        orderService.registerOrder(
+            orderIdB,
+            UserId("user 2"), quantity, pricePerKg, Buy
+        )
         orderService.cancelOrder(orderIdA)
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
@@ -309,9 +316,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -322,13 +327,16 @@ internal class LiveOrderBoardServiceTest {
         val pricePerKg = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKg, Sell)
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity, pricePerKg, Buy)
+            UserId("user 2"), quantity, pricePerKg, Buy
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, pricePerKg, Sell)
+            UserId("user 1"), quantity, pricePerKg, Sell
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Sell,
@@ -337,9 +345,7 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -351,10 +357,12 @@ internal class LiveOrderBoardServiceTest {
         val sellPricePerKgLower = 306.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, buyPricePerKgHigher, Buy)
+            UserId("user 1"), quantity, buyPricePerKgHigher, Buy
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity, sellPricePerKgLower, Sell)
+            UserId("user 2"), quantity, sellPricePerKgLower, Sell
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Buy,
@@ -363,9 +371,7 @@ internal class LiveOrderBoardServiceTest {
             ), LiveOrderBoardItem(Sell, quantity, sellPricePerKgLower)
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -377,10 +383,12 @@ internal class LiveOrderBoardServiceTest {
         val sellPricePerKgLower = 307.0
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 1"), quantity, buyPricePerKgHigher, Buy)
+            UserId("user 1"), quantity, buyPricePerKgHigher, Buy
+        )
         orderService.registerOrder(
             OrderId.generate(),
-            UserId("user 2"), quantity, sellPricePerKgLower, Sell)
+            UserId("user 2"), quantity, sellPricePerKgLower, Sell
+        )
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Buy,
@@ -389,9 +397,7 @@ internal class LiveOrderBoardServiceTest {
             ), LiveOrderBoardItem(Sell, quantity, sellPricePerKgLower)
         )
 
-        liveOrderBoardService.updateLiveOrderBoard()
-
-        val liveBoard = liveOrderBoardService.liveOrderBoard()
+        val liveBoard = orderService.liveOrderBoard()
 
         assertThat(liveBoard).isEqualTo(expectedLiveBoard)
     }
@@ -413,7 +419,7 @@ internal class LiveOrderBoardServiceTest {
             Version.INITIAL
         )
         orderStorage.save(cancelledOrder, expectedVersion = Version.INITIAL)
-        liveOrderBoardService.updateLiveOrderBoard()
+
         val expectedLiveBoard = listOf(
             LiveOrderBoardItem(
                 Buy,
@@ -422,14 +428,13 @@ internal class LiveOrderBoardServiceTest {
             )
         )
 
-        val liveBoardAfterCancellation = liveOrderBoardService.liveOrderBoard()
+        val liveBoardAfterCancellation = orderService.liveOrderBoard()
         assertThat(liveBoardAfterCancellation).isEqualTo(expectedLiveBoard) //looks bad
 
         val activeOrder = cancelledOrder.copy(orderState = Active, version = Version.INITIAL)
         orderStorage.save(activeOrder, expectedVersion = activeOrder.version)
 
-        liveOrderBoardService.updateLiveOrderBoard()
-        assertThat(liveOrderBoardService.liveOrderBoard()).isEmpty() //fixes itself when original active order arrives
+        assertThat(orderService.liveOrderBoard()).isEmpty() //fixes itself when original active order arrives
     }
 
 }
