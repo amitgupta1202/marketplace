@@ -1,10 +1,5 @@
 package com.silverbars.marketplace
 
-/*
-    Design principles, since its been asked to be designed as shipped as library for client,
-    then assumptions made are client is trusted and library needs to be java friendly
-    and need to support multiple thread invoking at same time.
- */
 interface OrderService {
 
     /**
@@ -27,9 +22,15 @@ interface OrderService {
     fun liveOrderBoard(): LiveOrderBoard
 
     companion object {
-        private val orderStorage: OrderStorage = InMemoryOrderStorage()
-        private val liveOrderBoardProjectionProcessor = LiveOrderBoardStorage(orderStorage)
-        val INSTANCE: OrderService = DefaultOrderService(orderStorage, liveOrderBoardProjectionProcessor)
+        /**
+         * return the instance of order service, idea is to give client minimal work to instantiate
+         */
+        fun newInstance(): OrderService {
+            val orderQueue: OrderQueue = InMemoryOrderQueue()
+            val orderStorage: OrderStorage = InMemoryOrderStorage(orderQueue)
+            val liveOrderBoardProjectionProcessor: LiveOrderBoardStorage = InMemoryLiveOrderBoardStorage(orderQueue)
+            return DefaultOrderService(orderStorage, liveOrderBoardProjectionProcessor)
+        }
     }
 }
 
@@ -73,7 +74,7 @@ internal class DefaultOrderService(
     }
 
     override fun liveOrderBoard(): LiveOrderBoard =
-        liveOrderBoardStorage.liveOrderBoard().entries
+        liveOrderBoardStorage.get().entries
             .sortedBy { (price, qty) -> if (qty < 0) price else -price }
             .mapNotNull { (pricePerKey, qty) ->
                 when {
