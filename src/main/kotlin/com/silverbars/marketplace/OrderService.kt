@@ -5,7 +5,7 @@ interface OrderService {
     /**
      * Registers an order.
      *
-     * throws InvalidStateException when its order is does not exists or order is already cancelled.
+     * throws OrderAlreadyExists when order already exists.
      */
     fun registerOrder(orderId: OrderId, userId: UserId, quantity: Double, pricePerKg: Double, orderType: OrderType)
 

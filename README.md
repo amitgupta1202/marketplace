@@ -11,11 +11,11 @@ then provides API to show live demand of silver bars.
 - ./gradlew build
 
 ## Design 
-The problem seems to trivial to solve at first sight, but quickly seems like will have issues when ran on scale, so few 
+The problem seems to trivial to solve at first sight, but when running on scale will require different solution like every other problem, so few 
 design decision taken to solve scale problems. I have applied CQRS architecture, where OrderService captures order by method 
 `registerOrder` and `cancelOrder`, the method just validates and writes the order state to orderStorage, from orderStorage 
-the orders are written to a queue which is consumed by LiveOrderBoardProjectionProcessor which updates the LiveOrderBoard state, 
-which can be accessed by api `liveOrderBoard` in class LiveOrderBoardService.
+the orders are written to a queue which is consumed by LiveOrderBoardStorage `update` method which updates the LiveOrderBoard state, 
+which can be accessed by api `liveOrderBoard` in class OrderService.
 
 The solution is assuming the LiveOrderBoardService might be bit stale (my definition of classic CQRS).
 
